@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Made In Shop | Ofertas VIP</title>
     <style>
-        /* --- DESIGN GERAL --- */
+        /* --- DESIGN DARK MODE --- */
         body {
-            background-color: #0d1117; /* Fundo Escuro Moderno */
+            background-color: #0d1117;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -17,43 +17,30 @@
             margin: 0;
         }
 
-        /* --- LOGO E TÍTULO --- */
-        .profile-container {
-            text-align: center;
-            margin-bottom: 30px;
-        }
+        .profile-container { text-align: center; margin-bottom: 30px; }
         
+        /* LOGO REDONDA */
         .logo {
             width: 120px;
             height: 120px;
-            border-radius: 50%; /* Deixa redondo */
-            border: 3px solid #ff4500; /* Borda Laranja Shopee */
+            border-radius: 50%;
+            border: 3px solid #ff4500;
             object-fit: cover;
             box-shadow: 0 0 20px rgba(255, 69, 0, 0.4);
         }
 
-        h1 {
-            font-size: 1.2rem;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            font-weight: 700;
-        }
+        h1 { font-size: 1.2rem; margin-top: 15px; margin-bottom: 5px; font-weight: 700; }
+        p { color: #8b949e; font-size: 0.9rem; margin: 0; }
 
-        p {
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-
-        /* --- LISTA DE LINKS --- */
         .links-container {
             width: 100%;
-            max-width: 400px; /* Largura ideal para celular */
+            max-width: 400px;
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
+        /* ESTILO DOS BOTÕES */
         .btn {
             background-color: #161b22;
             border: 1px solid #30363d;
@@ -61,47 +48,39 @@
             padding: 18px;
             text-align: center;
             text-decoration: none;
-            border-radius: 50px; /* Botão arredondado */
+            border-radius: 50px;
             font-weight: 600;
-            transition: transform 0.2s, background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            transition: transform 0.2s;
+            display: block;
         }
 
-        .btn:hover {
-            transform: scale(1.02); /* Cresce um pouco ao passar o mouse */
-            background-color: #21262d;
-            border-color: #8b949e;
-        }
+        .btn:hover { transform: scale(1.02); background-color: #21262d; }
 
-        /* --- BOTÃO DESTAQUE (PRODUTO DO VÍDEO) --- */
-        .destaque {
+        /* ESTILOS ESPECIAIS (Controlados pela Planilha) */
+        .tipo-destaque {
             background: linear-gradient(45deg, #ff4500, #ff8c00);
             border: none;
-            color: white;
             box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
-            animation: pulse 2s infinite; /* Efeito pulsante */
+            animation: pulse 2s infinite;
         }
-
-        .destaque:hover {
-            background: linear-gradient(45deg, #ff6326, #ffa436);
+        
+        .tipo-whatsapp {
+            border-color: #25D366;
+            color: #25D366;
         }
+        
+        .tipo-whatsapp:hover { background-color: #0f351b; }
 
-        /* --- RODAPÉ --- */
-        .footer {
-            margin-top: 40px;
-            font-size: 0.8rem;
-            color: #484f58;
-        }
+        .footer { margin-top: 40px; font-size: 0.8rem; color: #484f58; }
 
-        /* --- ANIMAÇÃO PULSANTE --- */
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
         }
+        
+        /* Carregando... */
+        #loading { color: #8b949e; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -112,29 +91,55 @@
         <p>Achadinhos de Tecnologia Verificados 🛡️</p>
     </div>
 
-    <div class="links-container">
-        
-        <a href="SEU_LINK_DO_SMARTWATCH_AQUI" class="btn destaque" target="_blank">
-            🔥 OFERTA DO VÍDEO (Link Direto)
-        </a>
-
-        <a href="SEU_LINK_DO_WHATSAPP_AQUI" class="btn" target="_blank">
-            🚀 Entrar no Grupo VIP
-        </a>
-
-        <a href="SEU_LINK_DA_COLECAO_SHOPEE" class="btn" target="_blank">
-            🛍️ Ver Minha Lojinha Completa
-        </a>
-
-        <a href="SEU_LINK_DO_TIKTOK" class="btn" target="_blank">
-            📱 Siga no TikTok
-        </a>
-
+    <div class="links-container" id="lista-links">
+        <div id="loading">Carregando ofertas...</div>
     </div>
 
-    <div class="footer">
-        © 2025 Made In Shop
-    </div>
+    <div class="footer">© 2025 Made In Shop</div>
+
+    <script>
+        // --- SEU LINK DA PLANILHA JÁ CONFIGURADO AQUI ---
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt0HVavnxyQ37_a78CkH7kz3sOvDp7CuRkotuckFy5PA2aLvZo6zjktFI00mp2PU_NqIneg9xc9HFD/pub?output=csv"; 
+
+        async function carregarLinks() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const data = await response.text();
+                
+                // Separa as linhas do CSV
+                const linhas = data.split('\n').slice(1); // Pula o cabeçalho
+                const container = document.getElementById('lista-links');
+                container.innerHTML = ''; // Limpa a mensagem de carregando
+
+                linhas.forEach(linha => {
+                    // Lógica para ler o CSV separando por vírgula
+                    const colunas = linha.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+                    
+                    if (colunas && colunas.length >= 2) {
+                        // Remove aspas que o Google Sheets coloca
+                        const titulo = colunas[0].replace(/^"|"$/g, '');
+                        const link = colunas[1].replace(/^"|"$/g, '');
+                        // Se tiver a 3ª coluna (tipo), usa ela. Se não, usa 'comum'
+                        const tipo = colunas[2] ? colunas[2].replace(/^"|"$/g, '').trim() : 'comum';
+
+                        if(titulo && link) {
+                            const a = document.createElement('a');
+                            a.href = link;
+                            a.className = `btn tipo-${tipo}`; // Aplica a classe (destaque, whatsapp, comum)
+                            a.target = "_blank";
+                            a.innerText = titulo;
+                            container.appendChild(a);
+                        }
+                    }
+                });
+            } catch (erro) {
+                console.error("Erro ao carregar planilha:", erro);
+                document.getElementById('lista-links').innerHTML = '<p style="color:red">Erro ao carregar ofertas. Tente atualizar.</p>';
+            }
+        }
+
+        carregarLinks();
+    </script>
 
 </body>
 </html>
