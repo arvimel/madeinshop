@@ -19,7 +19,6 @@
 
         .profile-container { text-align: center; margin-bottom: 30px; }
         
-        /* LOGO REDONDA */
         .logo {
             width: 120px;
             height: 120px;
@@ -40,7 +39,6 @@
             gap: 15px;
         }
 
-        /* ESTILO DOS BOTÕES */
         .btn {
             background-color: #161b22;
             border: 1px solid #30363d;
@@ -53,28 +51,22 @@
             transition: transform 0.2s;
             display: block;
         }
-
         .btn:hover { transform: scale(1.02); background-color: #21262d; }
 
-        /* ESTILOS ESPECIAIS (Controlados pela Planilha) */
+        /* CORES ESPECIAIS */
         .tipo-destaque {
             background: linear-gradient(45deg, #ff4500, #ff8c00);
             border: none;
             box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
             animation: pulse 2s infinite;
         }
-        
-        .tipo-whatsapp {
-            border-color: #25D366;
-            color: #25D366;
-        }
-        
+        .tipo-whatsapp { border-color: #25D366; color: #25D366; }
         .tipo-whatsapp:hover { background-color: #0f351b; }
-
-        /* Estilo TikTok (Preto e Rosa/Azul sutil) */
-        .tipo-tiktok {
-            border-color: #fe2c55;
-            box-shadow: 0 0 5px rgba(254, 44, 85, 0.2);
+        
+        .tipo-tiktok { 
+            border-color: #fe2c55; 
+            color: #fe2c55;
+            box-shadow: 0 0 10px rgba(254, 44, 85, 0.1);
         }
         .tipo-tiktok:hover { background-color: #240a10; }
 
@@ -85,9 +77,20 @@
             70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
         }
-        
-        /* Carregando... */
-        #loading { color: #8b949e; margin-top: 20px; }
+
+        /* ÁREA DE DIAGNÓSTICO (Para a gente descobrir o erro) */
+        #debug-area {
+            margin-top: 50px;
+            padding: 15px;
+            background: #000;
+            border: 1px solid #333;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 0.8rem;
+            width: 90%;
+            max-width: 400px;
+            word-break: break-all;
+        }
     </style>
 </head>
 <body>
@@ -104,11 +107,16 @@
 
     <div class="footer">© 2025 Made In Shop</div>
 
+    <div id="debug-area">
+        <strong>🕵️ MODO DETETIVE ATIVO:</strong><br>
+        <span id="log-erros">Aguardando dados...</span>
+    </div>
+
     <script>
-        // --- SEU LINK DA PLANILHA (NÃO MEXER) ---
+        // SEU LINK DA PLANILHA
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt0HVavnxyQ37_a78CkH7kz3sOvDp7CuRkotuckFy5PA2aLvZo6zjktFI00mp2PU_NqIneg9xc9HFD/pub?output=csv"; 
 
-        // Função para ler CSV corretamente (aceitando espaços e vírgulas dentro de aspas)
+        // Função Parser V2 (Corrige bug dos espaços)
         function parseCSV(text) {
             const rows = [];
             let currentRow = [];
@@ -120,12 +128,8 @@
                 const nextChar = text[i + 1];
 
                 if (char === '"') {
-                    if (inQuotes && nextChar === '"') {
-                        currentCell += '"'; // Aspas duplas dentro de aspas
-                        i++;
-                    } else {
-                        inQuotes = !inQuotes; // Inverte estado de aspas
-                    }
+                    if (inQuotes && nextChar === '"') { currentCell += '"'; i++; }
+                    else { inQuotes = !inQuotes; }
                 } else if (char === ',' && !inQuotes) {
                     currentRow.push(currentCell.trim());
                     currentCell = '';
@@ -136,34 +140,38 @@
                     }
                     currentRow = [];
                     currentCell = '';
-                    if (char === '\r' && nextChar === '\n') i++; // Pula \n após \r
+                    if (char === '\r' && nextChar === '\n') i++; 
                 } else {
                     currentCell += char;
                 }
             }
-            if (currentCell) currentRow.push(currentCell.trim()); // Adiciona última célula
+            if (currentCell) currentRow.push(currentCell.trim());
             if (currentRow.length > 0) rows.push(currentRow);
-            
-            return rows.slice(1); // Remove o cabeçalho
+            return rows.slice(1); // Remove cabeçalho
         }
 
         async function carregarLinks() {
+            const log = document.getElementById('log-erros');
             try {
                 const response = await fetch(SHEET_URL);
                 const data = await response.text();
                 
-                // Usa a nova função de leitura que corrige o erro dos espaços
                 const linhas = parseCSV(data);
                 const container = document.getElementById('lista-links');
                 container.innerHTML = ''; 
+                
+                let relatorio = "";
 
-                linhas.forEach(colunas => {
-                    // Verifica se tem Título e Link
+                linhas.forEach((colunas, index) => {
+                    // RELATÓRIO DO DETETIVE
+                    relatorio += `Linha ${index+2}: `;
+                    
                     if (colunas.length >= 2) {
                         const titulo = colunas[0];
                         const link = colunas[1];
-                        // Se não tiver tipo, assume 'comum'
                         const tipo = colunas[2] ? colunas[2] : 'comum';
+
+                        relatorio += `[OK] Título="${titulo.substring(0,10)}..." | Tipo=${tipo}<br>`;
 
                         if(titulo && link) {
                             const a = document.createElement('a');
@@ -173,11 +181,17 @@
                             a.innerText = titulo;
                             container.appendChild(a);
                         }
+                    } else {
+                        relatorio += `[ERRO] Colunas insuficientes (${colunas.length})<br>`;
                     }
                 });
+                
+                log.innerHTML = relatorio;
+
             } catch (erro) {
-                console.error("Erro ao carregar planilha:", erro);
-                document.getElementById('lista-links').innerHTML = '<p style="color:red">Erro ao carregar ofertas. Tente atualizar.</p>';
+                console.error(erro);
+                document.getElementById('lista-links').innerHTML = '<p>Erro ao ler planilha.</p>';
+                log.innerHTML = "ERRO FATAL: Não consegui acessar o link CSV.";
             }
         }
 
