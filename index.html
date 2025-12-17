@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Made In Shop | Ofertas VIP</title>
     <style>
-        /* --- DESIGN DARK MODE V4 (FINAL) --- */
+        /* --- DESIGN DARK MODE V5 (CLEAN) --- */
         body {
             background-color: #0d1117;
             color: #ffffff;
@@ -15,7 +15,7 @@
             align-items: center;
             padding: 40px 20px;
             margin: 0;
-            min-height: 100vh; /* Garante que ocupa a tela toda */
+            min-height: 100vh;
         }
 
         .profile-container { text-align: center; margin-bottom: 30px; }
@@ -38,7 +38,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            padding-bottom: 50px; /* Espaço extra no final para não cortar */
+            padding-bottom: 60px;
         }
 
         .btn {
@@ -105,7 +105,7 @@
     <div class="footer">© 2025 Made In Shop</div>
 
     <script>
-        // SEU LINK JÁ CONFIGURADO
+        // SEU LINK DA PLANILHA
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt0HVavnxyQ37_a78CkH7kz3sOvDp7CuRkotuckFy5PA2aLvZo6zjktFI00mp2PU_NqIneg9xc9HFD/pub?output=csv"; 
 
         function parseCSV(text) {
@@ -136,15 +136,21 @@
                     currentCell += char;
                 }
             }
-            if (currentCell) currentRow.push(currentCell.trim());
-            if (currentRow.length > 0) rows.push(currentRow);
+            // GARANTIA DE FIM DE ARQUIVO: Pega o que sobrou mesmo sem ENTER
+            if (currentCell || currentRow.length > 0) {
+                if(currentCell) currentRow.push(currentCell.trim());
+                rows.push(currentRow);
+            }
+            
             return rows.slice(1); 
         }
 
         async function carregarLinks() {
             try {
-                // Adiciona um número aleatório no final para evitar Cache do celular
-                const response = await fetch(SHEET_URL + "&t=" + new Date().getTime());
+                // Truque anti-cache para garantir atualização imediata
+                const url = SHEET_URL + "&t=" + new Date().getTime();
+                
+                const response = await fetch(url);
                 const data = await response.text();
                 
                 const linhas = parseCSV(data);
@@ -157,7 +163,8 @@
                         const link = colunas[1];
                         const tipo = colunas[2] ? colunas[2] : 'comum';
 
-                        if(titulo && link) {
+                        // Verifica se o título é válido (ignora linhas vazias ou com ponto)
+                        if(titulo && link && titulo !== '.') {
                             const a = document.createElement('a');
                             a.href = link;
                             a.className = `btn tipo-${tipo}`;
