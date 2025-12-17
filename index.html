@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Made In Shop | Ofertas VIP</title>
     <style>
-        /* --- DESIGN DARK MODE --- */
+        /* --- DESIGN DARK MODE V4 (FINAL) --- */
         body {
             background-color: #0d1117;
             color: #ffffff;
@@ -15,6 +15,7 @@
             align-items: center;
             padding: 40px 20px;
             margin: 0;
+            min-height: 100vh; /* Garante que ocupa a tela toda */
         }
 
         .profile-container { text-align: center; margin-bottom: 30px; }
@@ -37,6 +38,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            padding-bottom: 50px; /* Espaço extra no final para não cortar */
         }
 
         .btn {
@@ -48,8 +50,9 @@
             text-decoration: none;
             border-radius: 50px;
             font-weight: 600;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background-color 0.2s;
             display: block;
+            cursor: pointer;
         }
         .btn:hover { transform: scale(1.02); background-color: #21262d; }
 
@@ -60,6 +63,7 @@
             box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
             animation: pulse 2s infinite;
         }
+        
         .tipo-whatsapp { border-color: #25D366; color: #25D366; }
         .tipo-whatsapp:hover { background-color: #0f351b; }
         
@@ -70,27 +74,20 @@
         }
         .tipo-tiktok:hover { background-color: #240a10; }
 
-        .footer { margin-top: 40px; font-size: 0.8rem; color: #484f58; }
+        .footer { 
+            margin-top: auto; 
+            font-size: 0.8rem; 
+            color: #484f58; 
+            padding-bottom: 20px;
+        }
 
         @keyframes pulse {
             0% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(255, 69, 0, 0); }
             100% { box-shadow: 0 0 0 0 rgba(255, 69, 0, 0); }
         }
-
-        /* ÁREA DE DIAGNÓSTICO (Para a gente descobrir o erro) */
-        #debug-area {
-            margin-top: 50px;
-            padding: 15px;
-            background: #000;
-            border: 1px solid #333;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 0.8rem;
-            width: 90%;
-            max-width: 400px;
-            word-break: break-all;
-        }
+        
+        #loading { color: #8b949e; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -107,16 +104,10 @@
 
     <div class="footer">© 2025 Made In Shop</div>
 
-    <div id="debug-area">
-        <strong>🕵️ MODO DETETIVE ATIVO:</strong><br>
-        <span id="log-erros">Aguardando dados...</span>
-    </div>
-
     <script>
-        // SEU LINK DA PLANILHA
+        // SEU LINK JÁ CONFIGURADO
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt0HVavnxyQ37_a78CkH7kz3sOvDp7CuRkotuckFy5PA2aLvZo6zjktFI00mp2PU_NqIneg9xc9HFD/pub?output=csv"; 
 
-        // Função Parser V2 (Corrige bug dos espaços)
         function parseCSV(text) {
             const rows = [];
             let currentRow = [];
@@ -147,31 +138,24 @@
             }
             if (currentCell) currentRow.push(currentCell.trim());
             if (currentRow.length > 0) rows.push(currentRow);
-            return rows.slice(1); // Remove cabeçalho
+            return rows.slice(1); 
         }
 
         async function carregarLinks() {
-            const log = document.getElementById('log-erros');
             try {
-                const response = await fetch(SHEET_URL);
+                // Adiciona um número aleatório no final para evitar Cache do celular
+                const response = await fetch(SHEET_URL + "&t=" + new Date().getTime());
                 const data = await response.text();
                 
                 const linhas = parseCSV(data);
                 const container = document.getElementById('lista-links');
                 container.innerHTML = ''; 
-                
-                let relatorio = "";
 
-                linhas.forEach((colunas, index) => {
-                    // RELATÓRIO DO DETETIVE
-                    relatorio += `Linha ${index+2}: `;
-                    
+                linhas.forEach(colunas => {
                     if (colunas.length >= 2) {
                         const titulo = colunas[0];
                         const link = colunas[1];
                         const tipo = colunas[2] ? colunas[2] : 'comum';
-
-                        relatorio += `[OK] Título="${titulo.substring(0,10)}..." | Tipo=${tipo}<br>`;
 
                         if(titulo && link) {
                             const a = document.createElement('a');
@@ -181,17 +165,11 @@
                             a.innerText = titulo;
                             container.appendChild(a);
                         }
-                    } else {
-                        relatorio += `[ERRO] Colunas insuficientes (${colunas.length})<br>`;
                     }
                 });
-                
-                log.innerHTML = relatorio;
-
             } catch (erro) {
                 console.error(erro);
-                document.getElementById('lista-links').innerHTML = '<p>Erro ao ler planilha.</p>';
-                log.innerHTML = "ERRO FATAL: Não consegui acessar o link CSV.";
+                document.getElementById('lista-links').innerHTML = '<p style="color:red">Erro ao carregar. Tente atualizar.</p>';
             }
         }
 
