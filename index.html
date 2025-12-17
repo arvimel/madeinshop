@@ -71,6 +71,13 @@
         
         .tipo-whatsapp:hover { background-color: #0f351b; }
 
+        /* Estilo TikTok (Preto e Rosa/Azul sutil) */
+        .tipo-tiktok {
+            border-color: #fe2c55;
+            box-shadow: 0 0 5px rgba(254, 44, 85, 0.2);
+        }
+        .tipo-tiktok:hover { background-color: #240a10; }
+
         .footer { margin-top: 40px; font-size: 0.8rem; color: #484f58; }
 
         @keyframes pulse {
@@ -98,34 +105,70 @@
     <div class="footer">© 2025 Made In Shop</div>
 
     <script>
-        // --- SEU LINK DA PLANILHA JÁ CONFIGURADO AQUI ---
+        // --- SEU LINK DA PLANILHA (NÃO MEXER) ---
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTt0HVavnxyQ37_a78CkH7kz3sOvDp7CuRkotuckFy5PA2aLvZo6zjktFI00mp2PU_NqIneg9xc9HFD/pub?output=csv"; 
+
+        // Função para ler CSV corretamente (aceitando espaços e vírgulas dentro de aspas)
+        function parseCSV(text) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1];
+
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentCell += '"'; // Aspas duplas dentro de aspas
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes; // Inverte estado de aspas
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentCell.trim());
+                    currentCell = '';
+                } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                    if (currentCell || currentRow.length > 0) {
+                        currentRow.push(currentCell.trim());
+                        rows.push(currentRow);
+                    }
+                    currentRow = [];
+                    currentCell = '';
+                    if (char === '\r' && nextChar === '\n') i++; // Pula \n após \r
+                } else {
+                    currentCell += char;
+                }
+            }
+            if (currentCell) currentRow.push(currentCell.trim()); // Adiciona última célula
+            if (currentRow.length > 0) rows.push(currentRow);
+            
+            return rows.slice(1); // Remove o cabeçalho
+        }
 
         async function carregarLinks() {
             try {
                 const response = await fetch(SHEET_URL);
                 const data = await response.text();
                 
-                // Separa as linhas do CSV
-                const linhas = data.split('\n').slice(1); // Pula o cabeçalho
+                // Usa a nova função de leitura que corrige o erro dos espaços
+                const linhas = parseCSV(data);
                 const container = document.getElementById('lista-links');
-                container.innerHTML = ''; // Limpa a mensagem de carregando
+                container.innerHTML = ''; 
 
-                linhas.forEach(linha => {
-                    // Lógica para ler o CSV separando por vírgula
-                    const colunas = linha.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-                    
-                    if (colunas && colunas.length >= 2) {
-                        // Remove aspas que o Google Sheets coloca
-                        const titulo = colunas[0].replace(/^"|"$/g, '');
-                        const link = colunas[1].replace(/^"|"$/g, '');
-                        // Se tiver a 3ª coluna (tipo), usa ela. Se não, usa 'comum'
-                        const tipo = colunas[2] ? colunas[2].replace(/^"|"$/g, '').trim() : 'comum';
+                linhas.forEach(colunas => {
+                    // Verifica se tem Título e Link
+                    if (colunas.length >= 2) {
+                        const titulo = colunas[0];
+                        const link = colunas[1];
+                        // Se não tiver tipo, assume 'comum'
+                        const tipo = colunas[2] ? colunas[2] : 'comum';
 
                         if(titulo && link) {
                             const a = document.createElement('a');
                             a.href = link;
-                            a.className = `btn tipo-${tipo}`; // Aplica a classe (destaque, whatsapp, comum)
+                            a.className = `btn tipo-${tipo}`;
                             a.target = "_blank";
                             a.innerText = titulo;
                             container.appendChild(a);
